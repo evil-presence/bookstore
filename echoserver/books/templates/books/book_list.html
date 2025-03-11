@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Каталог книг</title>
+</head>
+<body>
+    <h1>Каталог книг</h1>
+    <a href="{% url 'book_create' %}">Добавить новый элемент</a>
+
+    {% for book in page_obj %}
+        <div>
+            <h3>{{ book.title }}</h3>
+            <p>Автор: {{ book.author }}</p>
+            <p>Цена: {{ book.price }} руб.</p>
+            <a href="{% url 'book_update' book.pk %}">Изменить</a>
+            <a href="{% url 'book_delete' book.pk %}">Удалить</a>
+        </div>
+    {% empty %}
+        <p>Книги отсутствуют</p>
+    {% endfor %}
+
+    <div>
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+        {% endif %}
+        <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Следующая</a>
+        {% endif %}
+    </div>
+</body>
+</html>
