@@ -3,17 +3,21 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Удаление книги</title>
+    <title>Регистрация</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
     <div class="container">
-        <h1>Удалить книгу "{{ book.title }}"?</h1>
+        <h1>Регистрация</h1>
         <form method="post" class="form">
             {% csrf_token %}
+            {{ form.as_p }}
+            {% if form.errors %}
+                <p class="error">{{ form.non_field_errors }}</p>
+            {% endif %}
             <div class="form-actions">
-                <button type="submit" class="btn btn-delete">Да, удалить</button>
+                <button type="submit" class="btn btn-save">Зарегистрироваться</button>
                 <a href="{% url 'book_list' %}" class="btn btn-cancel">Отмена</a>
             </div>
         </form>
