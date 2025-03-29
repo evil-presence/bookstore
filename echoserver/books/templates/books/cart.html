@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Корзина</h1>
+        {% if messages %}
+            {% for message in messages %}
+                <p class="success">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        {% if cart_items %}
+            <div class="book-list">
+                {% for item in cart_items %}
+                    <div class="book-item">
+                        <h3>{{ item.book.title }}</h3>
+                        <p>Автор: {{ item.book.author }}</p>
+                        <p>Количество: {{ item.quantity }}</p>
+                        <p>Цена за единицу: {{ item.book.price }} руб.</p>
+                        <p>Итого: {{ item.total_price }} руб.</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <p class="total">Общая стоимость: {{ total_price }} руб.</p>
+            <div class="form-actions">
+                <a href="{% url 'checkout' %}" class="btn btn-save">Оформить заказ</a>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="clear_cart" class="btn btn-delete">Очистить корзину</button>
+                </form>
+                <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
+            </div>
+        {% else %}
+            <p class="empty">Корзина пуста</p>
+            <a href="{% url 'book_list' %}" class="btn btn-cancel">Вернуться к каталогу</a>
+        {% endif %}
+    </div>
+</body>
+</html>

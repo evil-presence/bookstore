@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Личный кабинет</h1>
+        {% if messages %}
+            {% for message in messages %}
+                <p class="success">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        <h2>Изменить данные</h2>
+        <form method="post" class="form">
+            {% csrf_token %}
+            {{ profile_form.as_p }}
+            <div class="form-actions">
+                <button type="submit" name="update_profile" class="btn btn-save">Сохранить</button>
+            </div>
+        </form>
+
+        <h2>Сменить пароль</h2>
+        <form method="post" class="form">
+            {% csrf_token %}
+            {{ password_form.as_p }}
+            <div class="form-actions">
+                <button type="submit" name="change_password" class="btn btn-save">Изменить пароль</button>
+            </div>
+        </form>
+
+        <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
+    </div>
+</body>
+</html>

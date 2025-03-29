@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Оформление заказа</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Оформление заказа</h1>
+        <p>Вы уверены, что хотите оформить заказ?</p>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-save">Подтвердить</button>
+                <a href="{% url 'cart' %}" class="btn btn-cancel">Отмена</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
