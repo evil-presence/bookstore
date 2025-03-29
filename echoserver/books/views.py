@@ -6,13 +6,14 @@ from django.contrib import messages
 from .models import CustomUser, Book, CartItem, Order, OrderItem
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, BookForm, ProfileForm, CustomPasswordChangeForm
 from django.db import transaction
+from decimal import Decimal
 
 def is_admin(user):
-    return user.is_authenticated and user.is_superuser == 1
+    return user.is_authenticated and user.role == 'admin'
 
 def book_list(request):
     books = Book.objects.all()
-    paginator = Paginator(books, 9)
+    paginator = Paginator(books, 3)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'books/book_list.html', {'page_obj': page_obj})
@@ -23,6 +24,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            transfer_session_cart_to_db(request, user)  # Перенос корзины из сессии
             return redirect('book_list')
     else:
         form = CustomUserCreationForm()
@@ -34,6 +36,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            transfer_session_cart_to_db(request, user)  # Перенос корзины из сессии
             return redirect('book_list')
     else:
         form = CustomAuthenticationForm()
@@ -98,23 +101,52 @@ def profile(request):
         'password_form': password_form
     })
 
-@login_required
 def add_to_cart(request, book_id):
     book = get_object_or_404(Book, id=book_id)
-    cart_item, created = CartItem.objects.get_or_create(user=request.user, book=book)
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()
+    if request.user.is_authenticated:
+        cart_item, created = CartItem.objects.get_or_create(user=request.user, book=book)
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+    else:
+        cart = request.session.get('cart', {})
+        book_id_str = str(book_id)
+        if book_id_str in cart:
+            cart[book_id_str]['quantity'] += 1
+        else:
+            cart[book_id_str] = {
+                'quantity': 1,
+                'title': book.title,
+                'price': str(book.price)
+            }
+        request.session['cart'] = cart
     return redirect('book_list')
 
-@login_required
 def cart(request):
-    cart_items = CartItem.objects.filter(user=request.user)
-    total_price = sum(item.total_price for item in cart_items)
-    if request.method == 'POST' and 'clear_cart' in request.POST:
-        cart_items.delete()
-        messages.success(request, 'Корзина очищена.')
-        return redirect('cart')
+    if request.user.is_authenticated:
+        transfer_session_cart_to_db(request, request.user)
+        cart_items = CartItem.objects.filter(user=request.user)
+        total_price = sum(item.total_price for item in cart_items)
+        if request.method == 'POST' and 'clear_cart' in request.POST:
+            cart_items.delete()
+            messages.success(request, 'Корзина очищена.')
+            return redirect('cart')
+    else:
+        cart = request.session.get('cart', {})
+        cart_items = [
+            {
+                'book': {'title': item['title'], 'price': Decimal(item['price'])},
+                'quantity': item['quantity'],
+                'total_price': item['quantity'] * Decimal(item['price'])
+            }
+            for item in cart.values()
+        ]
+        total_price = sum(item['total_price'] for item in cart_items)
+        if request.method == 'POST' and 'clear_cart' in request.POST:
+            if 'cart' in request.session:
+                del request.session['cart']
+            messages.success(request, 'Корзина очищена.')
+            return redirect('cart')
     return render(request, 'books/cart.html', {'cart_items': cart_items, 'total_price': total_price})
 
 @login_required
@@ -144,3 +176,15 @@ def checkout(request):
 def orders(request):
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'books/orders.html', {'orders': orders})
+
+def transfer_session_cart_to_db(request, user):
+    if 'cart' in request.session:
+        for book_id, item in request.session['cart'].items():
+            book = get_object_or_404(Book, id=book_id)
+            cart_item, created = CartItem.objects.get_or_create(user=user, book=book)
+            if not created:
+                cart_item.quantity += item['quantity']
+            else:
+                cart_item.quantity = item['quantity']
+            cart_item.save()
+        del request.session['cart']

@@ -93,3 +93,4 @@ AUTH_USER_MODEL = 'books.CustomUser'
 
 LOGIN_URL = '/login/'
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'

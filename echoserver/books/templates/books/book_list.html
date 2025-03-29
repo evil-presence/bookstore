@@ -11,10 +11,10 @@
     <div class="container">
         <h1>Каталог книг</h1>
         <div class="auth-links">
+            <a href="{% url 'cart' %}" class="btn btn-add">Корзина</a>  <!-- Доступна всем -->
             {% if user.is_authenticated %}
                 <p>Привет, {{ user.first_name }} ({{ user.role }})!</p>
                 <a href="{% url 'profile' %}" class="btn btn-save">Личный кабинет</a>
-                <a href="{% url 'cart' %}" class="btn btn-add">Корзина</a>
                 <a href="{% url 'orders' %}" class="btn btn-edit">Мои заказы</a>
                 <a href="{% url 'logout' %}" class="btn btn-cancel">Выйти</a>
             {% else %}
@@ -34,9 +34,7 @@
                     <p>Автор: {{ book.author }}</p>
                     <p>Цена: {{ book.price }} руб.</p>
                     <div class="actions">
-                        {% if user.is_authenticated %}
-                            <a href="{% url 'add_to_cart' book.id %}" class="btn btn-save">В корзину</a>
-                        {% endif %}
+                        <a href="{% url 'add_to_cart' book.id %}" class="btn btn-save">В корзину</a>
                         {% if user.role == 'admin' %}
                             <a href="{% url 'book_update' book.pk %}" class="btn btn-edit">Изменить</a>
                             <a href="{% url 'book_delete' book.pk %}" class="btn btn-delete">Удалить</a>
