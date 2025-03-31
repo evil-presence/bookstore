@@ -195,5 +195,6 @@ def transfer_session_cart_to_db(request, user):
 
 def check_email(request):
     email = request.GET.get('email', '')
-    exists = CustomUser.objects.filter(email=email).exists()
+    current_email = request.GET.get('current_email', '')
+    exists = CustomUser.objects.filter(email=email).exclude(email=current_email).exists()
     return JsonResponse({'exists': exists})

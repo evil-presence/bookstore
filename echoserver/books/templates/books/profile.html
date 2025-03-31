@@ -17,7 +17,7 @@
         {% endif %}
 
         <h2>Изменить данные</h2>
-        <form method="post" class="form">
+        <form method="post" class="form" id="profile-form">
             {% csrf_token %}
             {{ profile_form.as_p }}
             <div class="form-actions">
@@ -25,6 +25,7 @@
                 <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
             </div>
         </form>
+        <div id="profile-validation-messages"></div>
 
         <h2>Сменить пароль</h2>
         <form method="post" class="form" id="password-form">
@@ -35,21 +36,28 @@
                 <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
             </div>
         </form>
-        <div id="validation-messages"></div>
+        <div id="password-validation-messages"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('password-form');
+            // Валидация профиля (email)
+            const profileForm = document.getElementById('profile-form');
+            const emailInput = document.getElementById('id_email');
+            const profileMessagesDiv = document.getElementById('profile-validation-messages');
+
+            // Валидация пароля (существующая)
+            const passwordForm = document.getElementById('password-form');
             const oldPasswordInput = document.getElementById('id_old_password');
             const newPassword1Input = document.getElementById('id_new_password1');
             const newPassword2Input = document.getElementById('id_new_password2');
             const username = '{{ user.username }}';
-            const messagesDiv = document.getElementById('validation-messages');
+            const passwordMessagesDiv = document.getElementById('password-validation-messages');
 
             const commonPasswords = ['password', '12345678', 'qwerty', 'admin123', 'letmein'];
 
-            function showMessage(field, message, isError = true) {
+            // Функция для отображения сообщений
+            function showMessage(field, message, isError = true, messagesDiv) {
                 let messageElement = document.getElementById(`${field.id}-message`);
                 if (!messageElement) {
                     messageElement = document.createElement('p');
@@ -60,20 +68,56 @@
                 messageElement.style.color = isError ? '#ef476f' : '#06d6a0';
             }
 
+            // Валидация email
+            emailInput.addEventListener('input', function() {
+                const email = emailInput.value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showMessage(emailInput, 'Введите корректный email.', true, profileMessagesDiv);
+                } else {
+                    fetch(`/check-email/?email=${encodeURIComponent(email)}&current_email=${encodeURIComponent('{{ user.email }}')}`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            showMessage(emailInput, 'Этот email уже зарегистрирован.', true, profileMessagesDiv);
+                        } else {
+                            showMessage(emailInput, 'Email доступен.', false, profileMessagesDiv);
+                        }
+                    })
+                    .catch(error => console.error('Ошибка:', error));
+                }
+            });
+
+            // Блокировка отправки формы профиля при ошибках
+            profileForm.addEventListener('submit', function(event) {
+                const email = emailInput.value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    event.preventDefault();
+                    showMessage(emailInput, 'Пожалуйста, исправьте email перед отправкой.', true, profileMessagesDiv);
+                }
+            });
+
+            // Валидация пароля (существующая)
             newPassword1Input.addEventListener('input', function() {
                 const password = newPassword1Input.value;
                 const onlyDigitsRegex = /^\d+$/;
 
                 if (password.length < 8) {
-                    showMessage(newPassword1Input, 'Пароль должен содержать не менее 8 символов.');
+                    showMessage(newPassword1Input, 'Пароль должен содержать не менее 8 символов.', true, passwordMessagesDiv);
                 } else if (onlyDigitsRegex.test(password)) {
-                    showMessage(newPassword1Input, 'Пароль не может состоять только из цифр.');
+                    showMessage(newPassword1Input, 'Пароль не может состоять только из цифр.', true, passwordMessagesDiv);
                 } else if (password.toLowerCase() === username.toLowerCase()) {
-                    showMessage(newPassword1Input, 'Пароль не должен совпадать с именем пользователя.');
+                    showMessage(newPassword1Input, 'Пароль не должен совпадать с именем пользователя.', true, passwordMessagesDiv);
                 } else if (commonPasswords.includes(password.toLowerCase())) {
-                    showMessage(newPassword1Input, 'Этот пароль слишком распространён.');
+                    showMessage(newPassword1Input, 'Этот пароль слишком распространён.', true, passwordMessagesDiv);
                 } else {
-                    showMessage(newPassword1Input, 'Пароль корректен.', false);
+                    showMessage(newPassword1Input, 'Пароль корректен.', false, passwordMessagesDiv);
                 }
                 validatePasswordsMatch();
             });
@@ -84,13 +128,13 @@
                 const password1 = newPassword1Input.value;
                 const password2 = newPassword2Input.value;
                 if (password1 && password2 && password1 !== password2) {
-                    showMessage(newPassword2Input, 'Пароли не совпадают.');
+                    showMessage(newPassword2Input, 'Пароли не совпадают.', true, passwordMessagesDiv);
                 } else if (password1 && password2) {
-                    showMessage(newPassword2Input, 'Пароли совпадают.', false);
+                    showMessage(newPassword2Input, 'Пароли совпадают.', false, passwordMessagesDiv);
                 }
             }
 
-            form.addEventListener('submit', function(event) {
+            passwordForm.addEventListener('submit', function(event) {
                 const password1 = newPassword1Input.value;
                 const password2 = newPassword2Input.value;
                 const onlyDigitsRegex = /^\d+$/;
@@ -101,7 +145,7 @@
                     commonPasswords.includes(password1.toLowerCase()) ||
                     password1 !== password2) {
                     event.preventDefault();
-                    showMessage(form, 'Пожалуйста, исправьте ошибки перед отправкой.');
+                    showMessage(passwordForm, 'Пожалуйста, исправьте ошибки перед отправкой.', true, passwordMessagesDiv);
                 }
             });
         });
