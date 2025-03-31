@@ -3,7 +3,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key-here'  # Замените на свой ключ
+SECRET_KEY = 'your-secret-key-here'
 
 DEBUG = True
 
@@ -46,6 +46,20 @@ TEMPLATES = [
         },
     },
 ]
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+]
+
+ARGON2_PASSWORD_HASHER = {
+    'time_cost': 2,
+    'memory_cost': 102400,
+    'parallelism': 8,
+}
 
 WSGI_APPLICATION = 'echoserver.wsgi.application'
 
