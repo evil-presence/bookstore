@@ -41,12 +41,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Валидация профиля (email)
             const profileForm = document.getElementById('profile-form');
             const emailInput = document.getElementById('id_email');
             const profileMessagesDiv = document.getElementById('profile-validation-messages');
 
-            // Валидация пароля (существующая)
             const passwordForm = document.getElementById('password-form');
             const oldPasswordInput = document.getElementById('id_old_password');
             const newPassword1Input = document.getElementById('id_new_password1');
@@ -56,7 +54,6 @@
 
             const commonPasswords = ['password', '12345678', 'qwerty', 'admin123', 'letmein'];
 
-            // Функция для отображения сообщений
             function showMessage(field, message, isError = true, messagesDiv) {
                 let messageElement = document.getElementById(`${field.id}-message`);
                 if (!messageElement) {
@@ -68,7 +65,6 @@
                 messageElement.style.color = isError ? '#ef476f' : '#06d6a0';
             }
 
-            // Валидация email
             emailInput.addEventListener('input', function() {
                 const email = emailInput.value;
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -93,7 +89,6 @@
                 }
             });
 
-            // Блокировка отправки формы профиля при ошибках
             profileForm.addEventListener('submit', function(event) {
                 const email = emailInput.value;
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -103,7 +98,6 @@
                 }
             });
 
-            // Валидация пароля (существующая)
             newPassword1Input.addEventListener('input', function() {
                 const password = newPassword1Input.value;
                 const onlyDigitsRegex = /^\d+$/;
