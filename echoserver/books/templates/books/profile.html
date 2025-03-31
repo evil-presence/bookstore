@@ -22,19 +22,89 @@
             {{ profile_form.as_p }}
             <div class="form-actions">
                 <button type="submit" name="update_profile" class="btn btn-save">Сохранить</button>
+                <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
             </div>
         </form>
 
         <h2>Сменить пароль</h2>
-        <form method="post" class="form">
+        <form method="post" class="form" id="password-form">
             {% csrf_token %}
             {{ password_form.as_p }}
             <div class="form-actions">
-                <button type="submit" name="change_password" class="btn btn-save">Изменить пароль</button>
+                <button type="submit" name="change_password" class="btn btn-save">Сменить пароль</button>
+                <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
             </div>
         </form>
-
-        <a href="{% url 'book_list' %}" class="btn btn-cancel">Назад</a>
+        <div id="validation-messages"></div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('password-form');
+            const oldPasswordInput = document.getElementById('id_old_password');
+            const newPassword1Input = document.getElementById('id_new_password1');
+            const newPassword2Input = document.getElementById('id_new_password2');
+            const username = '{{ user.username }}';
+            const messagesDiv = document.getElementById('validation-messages');
+
+            const commonPasswords = ['password', '12345678', 'qwerty', 'admin123', 'letmein'];
+
+            function showMessage(field, message, isError = true) {
+                let messageElement = document.getElementById(`${field.id}-message`);
+                if (!messageElement) {
+                    messageElement = document.createElement('p');
+                    messageElement.id = `${field.id}-message`;
+                    messagesDiv.appendChild(messageElement);
+                }
+                messageElement.textContent = message;
+                messageElement.style.color = isError ? '#ef476f' : '#06d6a0';
+            }
+
+            newPassword1Input.addEventListener('input', function() {
+                const password = newPassword1Input.value;
+                const onlyDigitsRegex = /^\d+$/;
+
+                if (password.length < 8) {
+                    showMessage(newPassword1Input, 'Пароль должен содержать не менее 8 символов.');
+                } else if (onlyDigitsRegex.test(password)) {
+                    showMessage(newPassword1Input, 'Пароль не может состоять только из цифр.');
+                } else if (password.toLowerCase() === username.toLowerCase()) {
+                    showMessage(newPassword1Input, 'Пароль не должен совпадать с именем пользователя.');
+                } else if (commonPasswords.includes(password.toLowerCase())) {
+                    showMessage(newPassword1Input, 'Этот пароль слишком распространён.');
+                } else {
+                    showMessage(newPassword1Input, 'Пароль корректен.', false);
+                }
+                validatePasswordsMatch();
+            });
+
+            newPassword2Input.addEventListener('input', validatePasswordsMatch);
+
+            function validatePasswordsMatch() {
+                const password1 = newPassword1Input.value;
+                const password2 = newPassword2Input.value;
+                if (password1 && password2 && password1 !== password2) {
+                    showMessage(newPassword2Input, 'Пароли не совпадают.');
+                } else if (password1 && password2) {
+                    showMessage(newPassword2Input, 'Пароли совпадают.', false);
+                }
+            }
+
+            form.addEventListener('submit', function(event) {
+                const password1 = newPassword1Input.value;
+                const password2 = newPassword2Input.value;
+                const onlyDigitsRegex = /^\d+$/;
+
+                if (password1.length < 8 ||
+                    onlyDigitsRegex.test(password1) ||
+                    password1.toLowerCase() === username.toLowerCase() ||
+                    commonPasswords.includes(password1.toLowerCase()) ||
+                    password1 !== password2) {
+                    event.preventDefault();
+                    showMessage(form, 'Пожалуйста, исправьте ошибки перед отправкой.');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

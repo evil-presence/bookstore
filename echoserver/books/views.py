@@ -7,16 +7,20 @@ from .models import CustomUser, Book, CartItem, Order, OrderItem
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, BookForm, ProfileForm, CustomPasswordChangeForm
 from django.db import transaction
 from decimal import Decimal
+from django.http import JsonResponse
 
 def is_admin(user):
     return user.is_authenticated and user.role == 'admin'
 
 def book_list(request):
     books = Book.objects.all()
-    paginator = Paginator(books, 3)
+    author_filter = request.GET.get('author', '')
+    if author_filter:
+        books = books.filter(author__icontains=author_filter)
+    paginator = Paginator(books, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'books/book_list.html', {'page_obj': page_obj})
+    return render(request, 'books/book_list.html', {'page_obj': page_obj, 'author_filter': author_filter})
 
 def register(request):
     if request.method == 'POST':
@@ -188,3 +192,8 @@ def transfer_session_cart_to_db(request, user):
                 cart_item.quantity = item['quantity']
             cart_item.save()
         del request.session['cart']
+
+def check_email(request):
+    email = request.GET.get('email', '')
+    exists = CustomUser.objects.filter(email=email).exists()
+    return JsonResponse({'exists': exists})

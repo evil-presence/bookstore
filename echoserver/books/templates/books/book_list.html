@@ -11,7 +11,7 @@
     <div class="container">
         <h1>Каталог книг</h1>
         <div class="auth-links">
-            <a href="{% url 'cart' %}" class="btn btn-add">Корзина</a>  <!-- Доступна всем -->
+            <a href="{% url 'cart' %}" class="btn btn-add">Корзина</a>
             {% if user.is_authenticated %}
                 <p>Привет, {{ user.first_name }} ({{ user.role }})!</p>
                 <a href="{% url 'profile' %}" class="btn btn-save">Личный кабинет</a>
@@ -26,6 +26,12 @@
         {% if user.is_authenticated %}
             <a href="{% url 'book_create' %}" class="btn btn-add">Добавить новую книгу</a>
         {% endif %}
+
+        <form method="get" class="form" style="margin: 20px 0;">
+            <input type="text" name="author" value="{{ author_filter }}" placeholder="Фильтр по автору">
+            <button type="submit" class="btn btn-save">Фильтровать</button>
+            <a href="{% url 'book_list' %}" class="btn btn-cancel">Сбросить</a>
+        </form>
 
         <div class="book-list">
             {% for book in page_obj %}
@@ -48,11 +54,11 @@
 
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">Предыдущая</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if author_filter %}&author={{ author_filter }}{% endif %}" class="page-link">Предыдущая</a>
             {% endif %}
             <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link">Следующая</a>
+                <a href="?page={{ page_obj.next_page_number }}{% if author_filter %}&author={{ author_filter }}{% endif %}" class="page-link">Следующая</a>
             {% endif %}
         </div>
     </div>
