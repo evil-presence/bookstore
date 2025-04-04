@@ -28,7 +28,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            transfer_session_cart_to_db(request, user)  # Перенос корзины из сессии
+            transfer_session_cart_to_db(request, user)
             return redirect('book_list')
     else:
         form = CustomUserCreationForm()
@@ -40,7 +40,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            transfer_session_cart_to_db(request, user)  # Перенос корзины из сессии
+            transfer_session_cart_to_db(request, user)
             return redirect('book_list')
     else:
         form = CustomAuthenticationForm()
