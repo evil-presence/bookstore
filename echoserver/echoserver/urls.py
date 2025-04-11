@@ -3,5 +3,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('books.urls')),  # Подключаем URL приложения books
+    path('', include('books.urls')),
 ]
