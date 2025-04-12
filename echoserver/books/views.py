@@ -12,16 +12,22 @@ from django.http import JsonResponse
 def is_admin(user):
     return user.is_authenticated and user.role == 'admin'
 
+
 def book_list(request):
     books = Book.objects.all()
     author_filter = request.GET.get('author', '')
     if author_filter:
         books = books.filter(author__icontains=author_filter)
-    paginator = Paginator(books, 9)
+    paginator = Paginator(books, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'books/book_list.html', {'page_obj': page_obj, 'author_filter': author_filter})
 
+    all_books = Book.objects.all()
+    return render(request, 'books/book_list.html', {
+        'page_obj': page_obj,
+        'author_filter': author_filter,
+        'all_books': all_books
+    })
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)

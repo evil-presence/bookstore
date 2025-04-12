@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-
+from urllib.parse import urlparse
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'your-secret-key-here'
@@ -76,6 +76,18 @@ DATABASES = {
         },
     }
 }
+
+#DATABASE_URL = os.getenv('DATABASE_URL')
+#if DATABASE_URL:
+#   db_info = urlparse(DATABASE_URL)
+#   DATABASES['default'] = {
+#       'ENGINE': 'django.db.backends.mysql',
+#       'NAME': db_info.path[1:],
+#       'USER': db_info.username,
+#       'PASSWORD': db_info.password,
+#       'HOST': db_info.hostname,
+#       'PORT': db_info.port,
+#   }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

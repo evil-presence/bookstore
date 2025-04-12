@@ -27,15 +27,15 @@
             <a href="{% url 'book_create' %}" class="btn btn-add">Добавить новую книгу</a>
         {% endif %}
 
-        <form method="get" class="form" style="margin: 20px 0;">
-            <input type="text" name="author" value="{{ author_filter }}" placeholder="Фильтр по автору">
-            <button type="submit" class="btn btn-save">Фильтровать</button>
-            <a href="{% url 'book_list' %}" class="btn btn-cancel">Сбросить</a>
-        </form>
+        <div class="form" style="margin: 20px 0;">
+            <input type="text" id="author-filter" value="{{ author_filter }}" placeholder="Фильтр по автору">
+            <button type="button" id="filter-btn" class="btn btn-save">Фильтровать</button>
+            <button type="button" id="reset-btn" class="btn btn-cancel">Сбросить</button>
+        </div>
 
-        <div class="book-list">
+        <div class="book-list" id="book-list">
             {% for book in page_obj %}
-                <div class="book-item">
+                <div class="book-item" data-author="{{ book.author|lower }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-id="{{ book.id }}">
                     <h3>{{ book.title }}</h3>
                     <p>Автор: {{ book.author }}</p>
                     <p>Цена: {{ book.price }} руб.</p>
@@ -52,7 +52,7 @@
             {% endfor %}
         </div>
 
-        <div class="pagination">
+        <div class="pagination" id="pagination">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}{% if author_filter %}&author={{ author_filter }}{% endif %}" class="page-link">Предыдущая</a>
             {% endif %}
@@ -62,5 +62,120 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        const allBooks = [
+            {% for book in all_books %}
+                {
+                    id: {{ book.id }},
+                    title: "{{ book.title|escapejs }}",
+                    author: "{{ book.author|escapejs|lower }}",
+                    price: "{{ book.price }}"
+                },
+            {% endfor %}
+        ];
+
+        const authorFilter = document.getElementById('author-filter');
+        const filterBtn = document.getElementById('filter-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const bookList = document.getElementById('book-list');
+        const pagination = document.getElementById('pagination');
+        const booksPerPage = 6;
+        let currentPage = 1;
+        const userRole = '{{ user.role|default:""|escapejs }}';
+
+        function renderBooks(books, page) {
+            bookList.innerHTML = '';
+            const start = (page - 1) * booksPerPage;
+            const end = start + booksPerPage;
+            const paginatedBooks = books.slice(start, end);
+
+            if (paginatedBooks.length === 0) {
+                bookList.innerHTML = '<p class="empty">Книги отсутствуют</p>';
+                pagination.innerHTML = '';
+                return;
+            }
+
+            paginatedBooks.forEach(book => {
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book-item';
+                bookDiv.dataset.author = book.author;
+                bookDiv.dataset.title = book.title;
+                bookDiv.dataset.price = book.price;
+                bookDiv.dataset.id = book.id;
+                bookDiv.innerHTML = `
+                    <h3>${book.title}</h3>
+                    <p>Автор: ${book.author}</p>
+                    <p>Цена: ${book.price} руб.</p>
+                    <div class="actions">
+                        <a href="/cart/add/${book.id}/" class="btn btn-save">В корзину</a>
+                        ${userRole === 'admin' ? `
+                            <a href="/update/${book.id}/" class="btn btn-edit">Изменить</a>
+                            <a href="/delete/${book.id}/" class="btn btn-delete">Удалить</a>
+                        ` : ''}
+                    </div>
+                `;
+                bookList.appendChild(bookDiv);
+            });
+
+            const totalPages = Math.ceil(books.length / booksPerPage);
+            pagination.innerHTML = '';
+
+            if (page > 1) {
+                const prevLink = document.createElement('a');
+                prevLink.className = 'page-link';
+                prevLink.textContent = 'Предыдущая';
+                prevLink.href = '#';
+                prevLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage--;
+                    renderBooks(books, currentPage);
+                });
+                pagination.appendChild(prevLink);
+            }
+
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = `Страница ${page} из ${totalPages}`;
+            pagination.appendChild(pageInfo);
+
+            if (page < totalPages) {
+                const nextLink = document.createElement('a');
+                nextLink.className = 'page-link';
+                nextLink.textContent = 'Следующая';
+                nextLink.href = '#';
+                nextLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage++;
+                    renderBooks(books, currentPage);
+                });
+                pagination.appendChild(nextLink);
+            }
+        }
+
+        function filterBooks() {
+            const filterValue = authorFilter.value.toLowerCase();
+            currentPage = 1;
+            const filteredBooks = allBooks.filter(book =>
+                filterValue === '' || book.author.includes(filterValue)
+            );
+            renderBooks(filteredBooks, currentPage);
+        }
+
+        filterBtn.addEventListener('click', filterBooks);
+
+        let timeout;
+        authorFilter.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(filterBooks, 300);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            authorFilter.value = '';
+            currentPage = 1;
+            renderBooks(allBooks, currentPage);
+        });
+
+        renderBooks(allBooks, currentPage);
+    </script>
 </body>
 </html>
